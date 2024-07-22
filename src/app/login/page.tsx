@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from "@/components/PocketBaseAuthProvidor";
+import { useAuth } from "@/components/PocketBaseAuthProvider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from "next/link";
 // import { useRouter } from "next/router";
 import { useRouter } from "next/navigation";
 import PocketBase from "pocketbase";
@@ -24,9 +25,7 @@ export default function LoginForm() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  // loading
-  if (isAuthenticated === null) return null;
-  if (!isAuthenticated) return <></>;
+  if (isAuthenticated) router.push("/app");
 
   const handleLogin = async (event: { preventDefault: () => void }) => {
     event.preventDefault();
@@ -35,7 +34,7 @@ export default function LoginForm() {
         .collection("users")
         .authWithPassword(email, password);
       console.log("Logged in successfully:", authData);
-      router.push("/dashboard");
+      router.push("/app");
       // Handle successful login, e.g., redirect or update state
     } catch (err) {
       console.error("Failed to log in:", err);
@@ -59,7 +58,7 @@ export default function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -77,10 +76,11 @@ export default function LoginForm() {
             </div>
             {error && <p className="text-red-500">{error}</p>}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col items-center gap-1">
             <Button type="submit" className="w-full">
               Sign in
             </Button>
+            <span>Don't have an account? <Link href="/register" className="text-primary underline">Sign up</Link></span>
           </CardFooter>
         </form>
       </Card>

@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from "@/components/PocketBaseAuthProvidor";
+import { useAuth } from "@/components/PocketBaseAuthProvider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,11 +22,6 @@ export default function LoginForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
-
-  // loading
-  if (isAuthenticated === null) return null;
-  if (!isAuthenticated) return <></>;
 
   const handleLogin = async (event: { preventDefault: () => void }) => {
     event.preventDefault();

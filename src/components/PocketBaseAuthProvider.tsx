@@ -22,14 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const checkAuth = async () => {
           if (pb.authStore.isValid) {
             setIsAuthenticated(true);
-            if (pathname === '/login' || pathname === '/register') {
-              router.push('/dashboard');
-            }
           } else {
             setIsAuthenticated(false);
-            if (pathname !== '/login') {
-              router.push('/login');
-            }
           }
           setLoading(false); // Set loading to false after checking authentication
         };
@@ -38,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }, [pb.authStore.isValid, pathname, router]);
   
       if (loading) {
-        return <div>Loading...</div>; // Display a loading state until authentication is checked
+        return <div>loading...</div>; // Display a loading state until authentication is checked
       }
   
     return (

@@ -34,16 +34,17 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useRouter } from "next/navigation";
 import PocketBase from "pocketbase";
-import { useAuth } from "@/components/PocketBaseAuthProvidor";
+import { useAuth } from "@/components/PocketBaseAuthProvider";
 
 export default function Dashboard() {
   const router = useRouter();
   const pb = new PocketBase("http://localhost:8090");
   const { isAuthenticated } = useAuth();
   
-  // loading
-  if (isAuthenticated === null) return null;
-  if (!isAuthenticated) return <></>;
+  if (!isAuthenticated) {
+    router.push("/login");
+    return null;
+  }
 
   const logout = async () => {
     pb.authStore.clear();
