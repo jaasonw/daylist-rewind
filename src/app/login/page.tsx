@@ -12,75 +12,77 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-// import { useRouter } from "next/router";
 import { useRouter } from "next/navigation";
-import PocketBase from "pocketbase";
-import { useState } from "react";
+import PocketBase, {
+  ClientResponseError,
+  RecordAuthResponse,
+  RecordModel,
+} from "pocketbase";
+import { useEffect, useState } from "react";
 
 export default function LoginForm() {
-  const pb = new PocketBase("http://localhost:8090");
+  const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const [authData, setAuthData] =
+    useState<null | RecordAuthResponse<RecordModel>>(null);
   const { isAuthenticated } = useAuth();
 
   if (isAuthenticated) router.push("/app");
 
-  const handleLogin = async (event: { preventDefault: () => void }) => {
+  const spotifyOAuth = async (event: { preventDefault: () => void }) => {
     event.preventDefault();
     try {
-      const authData = await pb
-        .collection("users")
-        .authWithPassword(email, password);
+      const authData = await pb.collection("users").authWithOAuth2({
+        provider: "spotify",
+        scopes: ["user-read-email", "playlist-modify-private"],
+      });
       console.log("Logged in successfully:", authData);
+      console.log(authData?.meta?.accessToken);
+      console.log(authData?.meta?.refreshToken);
+      console.log(authData.record.id);
+
+      console.log(authData?.meta?.email || authData?.meta?.rawUser?.email);
+
+      const data = {
+        user_id: authData.record.id,
+        spotify_id: authData?.meta?.id,
+        spotify_username: authData?.meta?.username,
+        spotify_email: authData?.meta?.email || authData?.meta?.rawUser?.email,
+        accessToken: authData?.meta?.accessToken,
+        refreshToken: authData?.meta?.refreshToken,
+        expiry: authData?.meta?.expiry,
+        display_name: authData?.meta?.rawUser?.display_name,
+        avatar_url: authData?.meta?.avatarUrl,
+      };
+
+      await pb.collection("users").update(authData.record.id, data);
+
       router.push("/app");
-      // Handle successful login, e.g., redirect or update state
     } catch (err) {
       console.error("Failed to log in:", err);
-      setError("Login failed. Please check your email and password.");
+      setError("Login failed");
     }
   };
-
   return (
     <section className="flex flex-col items-center justify-center min-h-screen">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account.
+            Link your Spotify account to get started
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={spotifyOAuth}>
           <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
             {error && <p className="text-red-500">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col items-center gap-1">
             <Button type="submit" className="w-full">
-              Sign in
+              Sign in with Spotify
             </Button>
-            <span>Don't have an account? <Link href="/register" className="text-primary underline">Sign up</Link></span>
           </CardFooter>
         </form>
       </Card>

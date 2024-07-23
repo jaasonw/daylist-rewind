@@ -16,7 +16,7 @@ import PocketBase, { ClientResponseError } from "pocketbase";
 import { useState } from "react";
 
 export default function LoginForm() {
-  const pb = new PocketBase("http://localhost:8090");
+  const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

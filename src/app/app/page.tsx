@@ -1,4 +1,5 @@
 "use client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import {
   Bell,
@@ -35,12 +36,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useRouter } from "next/navigation";
 import PocketBase from "pocketbase";
 import { useAuth } from "@/components/PocketBaseAuthProvider";
+import { useEffect } from "react";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export default function Dashboard() {
   const router = useRouter();
-  const pb = new PocketBase("http://localhost:8090");
+  const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL);
   const { isAuthenticated } = useAuth();
-  
+
   if (!isAuthenticated) {
     router.push("/login");
     return null;
@@ -52,14 +55,13 @@ export default function Dashboard() {
   };
 
   return (
-    // <div className="grid min-h-screen w-full">
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Package2 className="h-6 w-6" />
-              <span className="">pbstream</span>
+              <span className="">daylist rewind</span>
             </Link>
           </div>
           <div className="flex-1">
@@ -76,18 +78,20 @@ export default function Dashboard() {
           <div className="mt-auto p-4">
             <Card x-chunk="dashboard-02-chunk-0">
               <CardHeader className="p-2 pt-0 md:p-4">
-                <CardTitle>Upgrade to Pro</CardTitle>
+                <CardTitle>Donate</CardTitle>
                 <CardDescription>
-                  Unlock all features and get unlimited access to our support
-                  team.
+                  Help support my work by donating.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                <Button size="sm" className="w-full">
-                  Upgrade
-                </Button>
+                <Link href={"http://jason-wong.me/donate"}>
+                  <Button size="sm" className="w-full">
+                    Donate
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
+            created by jasonw
           </div>
         </div>
       </div>
@@ -176,17 +180,28 @@ export default function Dashboard() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search products..."
+                  placeholder="Search playlists..."
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />
               </div>
             </form>
           </div>
-          {pb.authStore.model?.email}
+          {pb.authStore.model?.display_name ||
+            pb.authStore.model?.spotify_username ||
+            pb.authStore.model?.spotify_email ||
+            pb.authStore.model?.spotify_id}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <CircleUser className="h-5 w-5" />
+                {pb.authStore.model?.avatar_url ? (
+                  <Avatar>
+                    <AvatarImage src={pb.authStore.model?.avatar_url} />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <CircleUser className="h-5 w-5" />
+                )}
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
@@ -199,10 +214,11 @@ export default function Dashboard() {
               <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <ModeToggle />
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           <div className="flex items-center">
-            <h1 className="text-lg font-semibold md:text-2xl">Inventory</h1>
+            <h1 className="text-lg font-semibold md:text-2xl">Welcome</h1>
           </div>
           <div
             className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm"
@@ -210,12 +226,11 @@ export default function Dashboard() {
           >
             <div className="flex flex-col items-center gap-1 text-center">
               <h3 className="text-2xl font-bold tracking-tight">
-                You have no clips
+                There's nothing here yet
               </h3>
               <p className="text-sm text-muted-foreground">
-                Upload a video to get started
+                Check back later after a few daylist updates!
               </p>
-              <Button className="mt-4">Upload</Button>
             </div>
           </div>
         </main>

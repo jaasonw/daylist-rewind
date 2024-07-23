@@ -1,15 +1,15 @@
 services:
-  pbstream-frontend:
+  daylist-rewind-frontend:
     build: .
-    container_name: pbstream-frontend
+    container_name: daylist-rewind-frontend
     ports:
       - "3000:3000"
     restart: unless-stopped
     environment:
-      - pocketbase_url=http://pbstream-database:8090
-  pbstream-database:
+      - BACKEND_URL=http://daylist-rewind-database:8090
+  daylist-rewind-database:
     image: ghcr.io/muchobien/pocketbase:latest
-    container_name: pbstream-database
+    container_name: daylist-rewind-database
     restart: unless-stopped
     expose:
       - 8090

@@ -1,5 +1,5 @@
 {
-  "name": "pbstream",
+  "name": "daylist-rewind",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
     "@radix-ui/react-label": "^2.1.0",
@@ -17,6 +18,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.410.0",
     "next": "14.2.5",
+    "next-themes": "^0.3.0",
     "pocketbase": "^0.21.3",
     "react": "^18",
     "react-dom": "^18",
