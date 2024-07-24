@@ -12,7 +12,7 @@ import (
 )
 
 func CreateClient(access_token string, refresh_token string, expiry string) (*spotify.Client, error) {
-	var auth = spotifyauth.New(spotifyauth.WithRedirectURL("http://localhost:8080/callback"), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate))
+	var auth = spotifyauth.New()
 
 	layout := "2006-01-02 15:04:05.000Z"
 	expiryTime, err := time.Parse(layout, expiry)
