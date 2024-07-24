@@ -2,22 +2,23 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron"
 	"github.com/zmb3/spotify/v2"
 
-	"daylist-rewind-backend/pocketbase"
-	"daylist-rewind-backend/spotifyutil"
-	"daylist-rewind-backend/util"
+	"daylist-rewind-backend/src/handlers"
+	"daylist-rewind-backend/src/pocketbase"
+	"daylist-rewind-backend/src/spotifyutil"
+	"daylist-rewind-backend/src/util"
 )
 
 func main() {
@@ -31,51 +32,40 @@ func main() {
 	// Run scheduled tasks in the background
 	go JobScheduler()
 
-	mux := http.NewServeMux()
+	// Serve the API on the main thread idk if this should be the other way around xd
+	// mux := http.NewServeMux()
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/ping"))
+	r.Use(middleware.SetHeader("Content-Type", "application/json"))
+	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Register the helloHandler function for the "/" route
-	mux.HandleFunc("/", func(responseWriter http.ResponseWriter, request *http.Request) {
-		fmt.Fprintln(responseWriter, "Hello, World!")
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`This ain't for the best My reputation's never been worse, so You must like me for me We can't make Any promises now, can we, babe? But you can make me a drink`))
 	})
 
-	mux.Handle("/playlist/", http.StripPrefix("/playlist/", http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
-		// Extract the playlist ID from the URL path
-		path := strings.Trim(request.URL.Path, "/")
-		playlistID := path // The path is already stripped by http.StripPrefix
+	r.Route("/user/playlists", func(r chi.Router) {
+		r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
+	})
 
-		if playlistID == "" {
-			http.Error(responseWriter, "Missing playlist ID", http.StatusBadRequest)
-			return
-		}
-
-		bearer, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
-		if err != nil {
-			log.Fatal("Error authenticating" + err.Error())
-		}
-		songs, err := pocketbase.GetPlaylistSongs(playlistID, bearer)
-		if err != nil {
-			slog.Error("Error getting playlist songs" + err.Error())
-			fmt.Fprintf(responseWriter, "Error getting playlist songs: %s", err)
-		}
-
-		// Process the playlist ID (for example, lookup playlist details)
-		fmt.Fprintf(responseWriter, "Playlist ID: %s", playlistID)
-		for _, song := range songs {
-			songJson, _ := json.Marshal(song)
-			fmt.Fprintf(responseWriter, "Song: %s\n", songJson)
-		}
-	})))
+	r.Route("/playlist", func(r chi.Router) {
+		r.Get("/{playlistID}", handlers.GetPlaylistTracksHandler)
+	})
 
 	// Start the server on port 8080
 	fmt.Println("Starting server on port 8080...")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }
 
 func JobScheduler() {
 	c := cron.New()
-	// run updateuser every 30 seconds
+	// Poll all users for daylist updates every 30 seconds
+	// Note: 30 seconds is spotify's rolling API rate limit window
 	c.AddFunc("*/30 * * * * *", func() {
 		bearer, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
 		if err != nil {
@@ -139,7 +129,10 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 		return err
 	}
 
-	playlistHash := util.GetMD5Hash(daylist.Name + time.Now().Format("09-07-2017"))
+	// generate a hash for the playlist to check if it already exists
+	// includes user id to prevent hash collisions between users
+	// includes playlist name to prevent hash collisions between playlists
+	playlistHash := util.GetMD5Hash(user.ID + daylist.Name + time.Now().Format("09-07-2017"))
 
 	slog.Info("Processing daylist for:", "user.ID", user.ID)
 	slog.Info("Playlist:", "daylist.Name", daylist.Name)

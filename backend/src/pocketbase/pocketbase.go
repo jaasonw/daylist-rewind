@@ -1,12 +1,11 @@
 package pocketbase
 
 import (
+	"daylist-rewind-backend/src/http"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
-
-	"daylist-rewind-backend/httputil"
 )
 
 type AuthRequest struct {
@@ -148,7 +147,7 @@ func Authenticate(identity, password string) (string, error) {
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
-	resp, err := httputil.PostRequest(url, authReq, headers)
+	resp, err := http.PostRequest(url, authReq, headers)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate: %v", err)
 	}
@@ -177,7 +176,7 @@ func GetAllUsers(token string) ([]UserRecord, error) {
 		headers := map[string]string{
 			"Authorization": token,
 		}
-		response, err := httputil.GetRequest(url, query, headers)
+		response, err := http.GetRequest(url, query, headers)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get users: %v", err)
 		}
@@ -210,7 +209,7 @@ func InsertSong(song Song, token string) (string, error) {
 	headers := map[string]string{
 		"Authorization": token,
 	}
-	response, error := httputil.PostRequest(url, song, headers)
+	response, error := http.PostRequest(url, song, headers)
 	if error != nil {
 		var errorResponse InsertSongErrorResponse
 		unmarshalError := json.Unmarshal(response, &errorResponse)
@@ -234,7 +233,7 @@ func UpdateUser(user UserRecord, token string) (string, error) {
 	header := map[string]string{
 		"Authorization": token,
 	}
-	response, error := httputil.PatchRequest(url, user, header)
+	response, error := http.PatchRequest(url, user, header)
 	if error != nil {
 		return "", fmt.Errorf("failed to update user: %v", error)
 	}
@@ -247,7 +246,7 @@ func CreatePlaylist(playlist Playlist, token string) (string, error) {
 	headers := map[string]string{
 		"Authorization": token,
 	}
-	response, error := httputil.PostRequest(url, playlist, headers)
+	response, error := http.PostRequest(url, playlist, headers)
 	if error != nil {
 		return "", fmt.Errorf("failed to create playlist: %v", error)
 	}
@@ -270,7 +269,7 @@ func AddSongToPlaylist(playlistID string, songID string, token string) (string, 
 		PlaylistID: playlistID,
 		SongID:     songID,
 	}
-	response, error := httputil.PostRequest(url, body, headers)
+	response, error := http.PostRequest(url, body, headers)
 	if error != nil {
 		return "", fmt.Errorf("failed to insert playlist song link: %v", error)
 	}
@@ -287,7 +286,7 @@ func GetSongBySongId(songID string, token string) (Song, error) {
 		"perPage": "1",
 		"filter":  "(song_id='" + songID + "')",
 	}
-	response, err := httputil.GetRequest(url, query, headers)
+	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
 		return Song{}, fmt.Errorf("failed to get song: %v", err)
 	}
@@ -313,7 +312,7 @@ func CheckPlaylistExists(hash string, token string) (bool, string, error) {
 		"perPage": "1",
 		"filter":  "(hash='" + hash + "')",
 	}
-	response, err := httputil.GetRequest(url, query, headers)
+	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to get playlist: %v", err)
 	}
@@ -341,7 +340,7 @@ func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
 		"perPage": "1000",
 		"filter":  "(owner='" + userID + "')",
 	}
-	response, err := httputil.GetRequest(url, query, headers)
+	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get playlists: %v", err)
 	}
@@ -367,7 +366,7 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 		"expand":  "song_id",
 		"sort":    "created",
 	}
-	response, err := httputil.GetRequest(url, query, headers)
+	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get playlist songs: %v", err)
 	}
@@ -381,7 +380,6 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 
 	var songs []Song
 	for _, songPlaylistLink := range songPlaylistResponse.Items {
-		slog.Info(playlistID, songPlaylistLink.Expand.SongID.ID, songPlaylistLink.Expand.SongID.Name)
 		songs = append(songs, songPlaylistLink.Expand.SongID)
 	}
 
