@@ -120,247 +120,131 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
+	"log/slog"
 	"os"
-	"time"
 
-	spotifyauth "github.com/zmb3/spotify/v2/auth"
-	"golang.org/x/oauth2"
-
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
+
+	"daylist-rewind-backend/pocketbase"
+	"daylist-rewind-backend/spotifyutil"
+	"daylist-rewind-backend/util"
 )
-
-// redirectURI is the OAuth redirect URI for the application.
-// You must register an application at Spotify's developer portal
-// and enter this value.
-const redirectURI = "http://localhost:8080/callback"
-
-var (
-	auth = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate))
-)
-
-func pb_authenticate(identity, password string) (string, error) {
-
-	type AuthRequest struct {
-		Identity string `json:"identity"`
-		Password string `json:"password"`
-	}
-
-	type AuthResponse struct {
-		Token string `json:"token"`
-	}
-
-	url := "http://localhost:8090/api/admins/auth-with-password"
-
-	// Create the request body
-	authReq := AuthRequest{
-		Identity: identity,
-		Password: password,
-	}
-
-	reqBody, err := json.Marshal(authReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request body: %v", err)
-	}
-
-	// Create the POST request
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return "", fmt.Errorf("failed to make POST request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Read the response
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("received non-200 response status: %s", resp.Status)
-	}
-
-	// Unmarshal the response body into AuthResponse
-	var authResp AuthResponse
-	err = json.Unmarshal(respBody, &authResp)
-	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
-	}
-
-	return authResp.Token, nil
-}
-
-type Item struct {
-	ID              string `json:"id"`
-	CollectionId    string `json:"collectionId"`
-	CollectionName  string `json:"collectionName"`
-	Username        string `json:"username"`
-	Verified        bool   `json:"verified"`
-	EmailVisibility bool   `json:"emailVisibility"`
-	Email           string `json:"email"`
-	Created         string `json:"created"`
-	Updated         string `json:"updated"`
-	SpotifyUsername string `json:"spotify_username"`
-	SpotifyEmail    string `json:"spotify_email"`
-	SpotifyID       string `json:"spotify_id"`
-	AccessToken     string `json:"accessToken"`
-	RefreshToken    string `json:"refreshToken"`
-	Expiry          string `json:"expiry"`
-	DisplayName     string `json:"display_name"`
-	AvatarURL       string `json:"avatar_url"`
-	ErrorCount      int    `json:"error_count"`
-	LastError       string `json:"last_error"`
-	Active          bool   `json:"active"`
-}
-
-type RecordsResponse struct {
-	Page       int    `json:"page"`
-	PerPage    int    `json:"perPage"`
-	TotalPages int    `json:"totalPages"`
-	TotalItems int    `json:"totalItems"`
-	Items      []Item `json:"items"`
-}
-
-func getAllRecords(token string) ([]Item, error) {
-
-	var allItems []Item
-	url := "http://localhost:8090/api/collections/users/records"
-	page := 1
-
-	for {
-		// Create the request
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %v", err)
-		}
-
-		// Set the authorization header
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		// Add the query parameters
-		q := req.URL.Query()
-		q.Add("perPage", "500")
-		q.Add("page", fmt.Sprintf("%d", page))
-		req.URL.RawQuery = q.Encode()
-
-		// Send the request
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("failed to make GET request: %v", err)
-		}
-		defer resp.Body.Close()
-
-		// Read the response
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %v", err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("received non-200 response status: %s", resp.Status)
-		}
-
-		// Unmarshal the response body into RecordsResponse
-		var recordsResp RecordsResponse
-		err = json.Unmarshal(respBody, &recordsResp)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal response body: %v", err)
-		}
-
-		// Append items to the list
-		allItems = append(allItems, recordsResp.Items...)
-
-		// Break if we have fetched all pages
-		if page >= recordsResp.TotalPages {
-			break
-		}
-
-		// Go to the next page
-		page++
-	}
-
-	return allItems, nil
-}
-
-func createClient(access_token string, refresh_token string, expiry string) *spotify.Client {
-
-	layout := "2006-01-02 15:04:05.000Z"
-	expiryTime, err := time.Parse(layout, expiry)
-	if err != nil {
-		log.Fatal("Error parsing time" + err.Error())
-	}
-
-	token := &oauth2.Token{
-		AccessToken:  access_token,
-		TokenType:    "Bearer",
-		RefreshToken: refresh_token,
-		Expiry:       expiryTime,
-	}
-	token, err = auth.RefreshToken(context.Background(), token)
-	if err != nil {
-		log.Fatalf("Failed to refresh token: %v", err)
-	}
-	fmt.Println(token)
-	client := spotify.New(auth.Client(context.Background(), token))
-	user, err := client.CurrentUser(context.Background())
-	if err != nil {
-		log.Fatalf("Failed to get user info: %v", err)
-	}
-
-	// Print the user info
-	fmt.Printf("User ID: %s\n", user.ID)
-	return client
-}
 
 func main() {
-	fmt.Println(uuid.New().String())
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	access_token := ""
-	refresh_token := ""
-	expiry := ""
-
-	client := createClient(access_token, refresh_token, expiry)
-
-	// This playlist ID is constant it is a spotify owned playlist that is unique to whoever is logged in
-	daylist, err := client.GetPlaylist(context.Background(), spotify.ID("37i9dQZF1EP6YuccBxUcC1"))
-	if err != nil {
-		log.Fatal("Error getting playlist" + err.Error())
-	}
-	fmt.Println(daylist.Name)
-	fmt.Println(daylist.Description)
-	fmt.Println(daylist.Owner.DisplayName)
-	for _, track := range daylist.Tracks.Tracks {
-		fmt.Println(
-			track.Track.Name,
-			track.Track.Artists[0].Name,
-			track.Track.Album.Name,
-			track.Track.Album.Images[0].URL,
-		)
-	}
-	bearer, err := pb_authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
+	bearer, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
 	if err != nil {
 		log.Fatal("Error authenticating" + err.Error())
 	}
-	fmt.Println(bearer)
 
-	items, err := getAllRecords(bearer)
+	items, err := pocketbase.GetAllUsers(bearer)
 	if err != nil {
-		log.Fatal("Error getting records" + err.Error())
+		log.Fatal("Error getting users" + err.Error())
 	}
-	for _, item := range items {
-		fmt.Println(item.ID)
+	for _, userRecord := range items {
+
+		client, error := spotifyutil.CreateClient(userRecord.AccessToken, userRecord.RefreshToken, userRecord.Expiry)
+		if error != nil {
+			slog.Error("Error creating client" + error.Error())
+			continue
+		}
+		token, err := client.Token()
+		if err != nil {
+			// increment error count
+			userRecord.ErrorCount++
+			userRecord.LastError = err.Error()
+			pocketbase.UpdateUser(userRecord, bearer)
+			slog.Error("Error getting token" + err.Error())
+		}
+
+		userRecord.AccessToken = token.AccessToken
+		userRecord.RefreshToken = token.RefreshToken
+		userRecord.Expiry = util.FormatTime(token.Expiry)
+		_, err = pocketbase.UpdateUser(userRecord, bearer)
+		if err != nil {
+			slog.Error("Error updating user" + err.Error())
+			continue
+		}
+
+		user, err := client.CurrentUser(context.Background())
+		if err != nil {
+			slog.Error("Error getting user" + err.Error())
+			continue
+		}
+		daylist, err := client.GetPlaylist(context.Background(), spotify.ID("37i9dQZF1EP6YuccBxUcC1"))
+		if err != nil {
+			slog.Error("Error getting playlist" + err.Error())
+			continue
+		}
+		slog.Info("Processing daylist for:", "user.ID", user.ID)
+		slog.Info("Playlist:", "daylist.Name", daylist.Name)
+		daylistJson, _ := json.Marshal(daylist)
+		slog.Info("Playlist:", "daylist.hash", util.GetMD5Hash(string(daylistJson)))
+		playlistExists, _, _ := pocketbase.CheckPlaylistExists(util.GetMD5Hash(string(daylistJson)), bearer)
+		if playlistExists {
+			slog.Info("Daylist unchanged, skipping")
+			continue
+		}
+		playlistId, err := pocketbase.CreatePlaylist(pocketbase.Playlist{
+			Hash:        util.GetMD5Hash(string(daylistJson)),
+			Title:       daylist.Name,
+			Owner:       userRecord.ID,
+			Description: daylist.Description,
+		}, bearer)
+
+		slog.Info("Created Playlist:", "playlist.ID", playlistId)
+
+		if err != nil {
+			slog.Error("Error creating playlist" + err.Error())
+			continue
+		}
+		for _, track := range daylist.Tracks.Tracks {
+			// slog.Info(
+			// 	"Processing",
+			// 	"track",
+			// 	track.Track.Name+" - "+
+			// 		track.Track.Artists[0].Name,
+			// )
+			song := pocketbase.Song{
+				SongID:     track.Track.ID.String(),
+				Name:       track.Track.Name,
+				Artist:     track.Track.Artists[0].Name,
+				ArtistURL:  track.Track.Artists[0].ExternalURLs["spotify"],
+				Album:      track.Track.Album.Name,
+				AlbumURL:   track.Track.Album.ExternalURLs["spotify"],
+				AlbumCover: track.Track.Album.Images[0].URL,
+				PreviewURL: track.Track.PreviewURL,
+				Duration:   int(track.Track.Duration),
+			}
+			insertResponse, err := pocketbase.InsertSong(song, bearer)
+			if err != nil {
+				if insertResponse != "Value must be unique." {
+					log.Printf("Error inserting song" + song.SongID + err.Error())
+				} else {
+					log.Printf("Song already exists: " + song.SongID)
+					// find it
+					song, err := pocketbase.GetSongBySongId(song.SongID, bearer)
+					if err != nil {
+						slog.Error("Error getting song by song id" + err.Error())
+					}
+					insertResponse = song.ID
+				}
+			}
+			_, err = pocketbase.AddSongToPlaylist(playlistId, insertResponse, bearer)
+			if err != nil {
+				slog.Error("Error adding song to playlist" + err.Error())
+			}
+
+		}
 	}
 }
