@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"daylist-rewind-backend/httputil"
 )
@@ -137,7 +138,7 @@ type PlaylistSongsResponse struct {
 }
 
 func Authenticate(identity, password string) (string, error) {
-	url := "http://localhost:8090/api/admins/auth-with-password"
+	url := os.Getenv("POCKETBASE_URL") + "/api/admins/auth-with-password"
 
 	// Create the request body
 	authReq := AuthRequest{
@@ -163,7 +164,7 @@ func Authenticate(identity, password string) (string, error) {
 }
 
 func GetAllUsers(token string) ([]UserRecord, error) {
-	url := "http://localhost:8090/api/collections/users/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
 	page := 1
 
 	var allItems []UserRecord
@@ -205,7 +206,7 @@ func GetAllUsers(token string) ([]UserRecord, error) {
 
 // InsertSong inserts a song into the database and returns the song ID.
 func InsertSong(song Song, token string) (string, error) {
-	url := "http://localhost:8090/api/collections/songs/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/songs/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -229,7 +230,7 @@ func InsertSong(song Song, token string) (string, error) {
 
 // UpdateUser updates a user in the database and returns the updated record
 func UpdateUser(user UserRecord, token string) (string, error) {
-	url := "http://localhost:8090/api/collections/users/records/" + user.ID
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records/" + user.ID
 	header := map[string]string{
 		"Authorization": token,
 	}
@@ -242,7 +243,7 @@ func UpdateUser(user UserRecord, token string) (string, error) {
 
 // CreatePlaylist creates a playlist in the database and returns the playlist ID.
 func CreatePlaylist(playlist Playlist, token string) (string, error) {
-	url := "http://localhost:8090/api/collections/playlists/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/playlists/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -261,7 +262,7 @@ func CreatePlaylist(playlist Playlist, token string) (string, error) {
 
 // AddSongToPlaylist adds a song to a playlist in the database.
 func AddSongToPlaylist(playlistID string, songID string, token string) (string, error) {
-	url := "http://localhost:8090/api/collections/song_playlist_link/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/song_playlist_link/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -277,7 +278,7 @@ func AddSongToPlaylist(playlistID string, songID string, token string) (string, 
 }
 
 func GetSongBySongId(songID string, token string) (Song, error) {
-	url := "http://localhost:8090/api/collections/songs/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/songs/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -303,7 +304,7 @@ func GetSongBySongId(songID string, token string) (Song, error) {
 }
 
 func CheckPlaylistExists(hash string, token string) (bool, string, error) {
-	url := "http://localhost:8090/api/collections/playlists/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/playlists/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -331,7 +332,7 @@ func CheckPlaylistExists(hash string, token string) (bool, string, error) {
 }
 
 func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
-	url := "http://localhost:8090/api/collections/playlists/records"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/playlists/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}
@@ -355,7 +356,7 @@ func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
 }
 
 func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
-	url := "http://localhost:8090/api/collections/song_playlist_link/records?"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/song_playlist_link/records?"
 	headers := map[string]string{
 		"Authorization": token,
 	}
