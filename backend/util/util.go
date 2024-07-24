@@ -4,15 +4,22 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
-// Shuffle shuffles an array of integers in place.
-func Shuffle(arr []int) {
-	n := len(arr)
+// ShuffleArray shuffles an array in place.
+func ShuffleArray(slice interface{}) {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		panic("Shuffle: not a slice")
+	}
+	n := rv.Len()
 	for i := n - 1; i > 0; i-- {
 		j := rand.Intn(i + 1)
-		arr[i], arr[j] = arr[j], arr[i]
+		tmp := reflect.ValueOf(rv.Index(i).Interface())
+		rv.Index(i).Set(rv.Index(j))
+		rv.Index(j).Set(tmp)
 	}
 }
 

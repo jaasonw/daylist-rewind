@@ -97,7 +97,10 @@ type SongPlaylistLink struct {
 	Created        string `json:"created"`
 	Updated        string `json:"updated"`
 	PlaylistID     string `json:"playlist_id"`
-	SongID         string `json:"song_id"`
+	Expand         struct {
+		SongID Song `json:"song_id"`
+	} `json:"expand"`
+	SongID string `json:"song_id"`
 }
 
 type GetSongResponse struct {
@@ -122,6 +125,15 @@ type SongPlaylistLinkResponse struct {
 	TotalPages int                `json:"totalPages"`
 	TotalItems int                `json:"totalItems"`
 	Items      []SongPlaylistLink `json:"items"`
+}
+
+type PlaylistSongsResponse struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"perPage"`
+	TotalPages int `json:"totalPages"`
+	TotalItems int `json:"totalItems"`
+
+	Items []SongPlaylistLink `json:"items"`
 }
 
 func Authenticate(identity, password string) (string, error) {
@@ -343,21 +355,24 @@ func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
 }
 
 func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
-	url := "http://localhost:8090/api/collections/song_playlist_link/records"
+	url := "http://localhost:8090/api/collections/song_playlist_link/records?"
 	headers := map[string]string{
 		"Authorization": token,
 	}
 
 	query := map[string]string{
-		"perPage": "1000",
+		"perPage": "500",
 		"filter":  "(playlist_id='" + playlistID + "')",
+		"expand":  "song_id",
+		"sort":    "created",
 	}
 	response, err := httputil.GetRequest(url, query, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get playlist songs: %v", err)
 	}
+	// slog.Info("response", "response", string(response))
 
-	songPlaylistResponse := SongPlaylistLinkResponse{}
+	songPlaylistResponse := PlaylistSongsResponse{}
 	err = json.Unmarshal(response, &songPlaylistResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal song playlist response: %v", err)
@@ -365,11 +380,8 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 
 	var songs []Song
 	for _, songPlaylistLink := range songPlaylistResponse.Items {
-		song, err := GetSongBySongId(songPlaylistLink.SongID, token)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get song: %v", err)
-		}
-		songs = append(songs, song)
+		slog.Info(playlistID, songPlaylistLink.Expand.SongID.ID, songPlaylistLink.Expand.SongID.Name)
+		songs = append(songs, songPlaylistLink.Expand.SongID)
 	}
 
 	return songs, nil
