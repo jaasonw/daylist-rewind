@@ -47,6 +47,10 @@ func main() {
 		w.Write([]byte(`This ain't for the best My reputation's never been worse, so You must like me for me We can't make Any promises now, can we, babe? But you can make me a drink`))
 	})
 
+	// Auth routes
+	r.Get("/login", handlers.LoginHandler)
+	r.Get("/callback", handlers.CallbackHandler)
+
 	r.Route("/user/playlists", func(r chi.Router) {
 		r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
 	})
@@ -132,7 +136,8 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 	// generate a hash for the playlist to check if it already exists
 	// includes user id to prevent hash collisions between users
 	// includes playlist name to prevent hash collisions between playlists
-	playlistHash := util.GetMD5Hash(user.ID + daylist.Name + time.Now().Format("09-07-2017"))
+	// includes the first song to prevent hash collisions at 12am
+	playlistHash := util.GetMD5Hash(user.ID + daylist.Name + time.Now().Format("09-07-2017") + daylist.Tracks.Tracks[0].Track.ID.String())
 
 	slog.Info("Processing daylist for:", "user.ID", user.ID)
 	slog.Info("Playlist:", "daylist.Name", daylist.Name)

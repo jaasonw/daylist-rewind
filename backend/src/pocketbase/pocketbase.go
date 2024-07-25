@@ -240,6 +240,30 @@ func UpdateUser(user UserRecord, token string) (string, error) {
 	return string(response), nil
 }
 
+func GetUserRecord(userID string, token string) (UserRecord, error) {
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
+	headers := map[string]string{
+		"Authorization": token,
+	}
+
+	query := map[string]string{
+		"perPage": "1",
+		"filter":  "(spotify_id='" + userID + "')",
+	}
+	response, err := http.GetRequest(url, query, headers)
+	if err != nil {
+		return UserRecord{}, fmt.Errorf("failed to get user record: %v", err)
+	}
+
+	userResponse := RecordsResponse{}
+	err = json.Unmarshal(response, &userResponse)
+	if err != nil {
+		return UserRecord{}, fmt.Errorf("failed to unmarshal user response: %v", err)
+	}
+
+	return userResponse.Items[0], nil
+}
+
 // CreatePlaylist creates a playlist in the database and returns the playlist ID.
 func CreatePlaylist(playlist Playlist, token string) (string, error) {
 	url := os.Getenv("POCKETBASE_URL") + "/api/collections/playlists/records"
