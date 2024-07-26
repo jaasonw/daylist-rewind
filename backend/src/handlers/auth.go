@@ -5,6 +5,7 @@ import (
 	"daylist-rewind-backend/src/pocketbase"
 	"daylist-rewind-backend/src/util"
 	"encoding/base64"
+	"encoding/json"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	redirectURI       = "http://localhost:8080/callback"
-	state             = "asdf"
+	redirectURI       = "http://localhost:3000/api/oauth-callback"
+	state             = "all_i_can_do_is_all_i_can_do"
 	auth              = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadEmail, spotifyauth.ScopePlaylistModifyPrivate))
 	codeVerifierStore = sync.Map{}
 )
@@ -86,11 +87,6 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		slog.Error(err.Error())
 	}
 
-	// Display user info as a simple example
-	w.Write([]byte("Login successful!"))
-	w.Write([]byte("User ID: " + user.ID))
-	w.Write([]byte("\nUser Name: " + user.DisplayName))
-
 	admin_token, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
 	if err != nil {
 		log.Fatal("Error authenticating: " + err.Error())
@@ -115,18 +111,49 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		slog.Info("User does not exist")
-		// user does not exist, create it
-		// record = &pocketbase.UserRecord{
-		// 	UserID: user.ID,
-		// 	Email: user.Email,
-		// 	AccessToken: token.AccessToken,
-		// 	RefreshToken: token.RefreshToken,
-		// 	Expiry: token.Expiry,
-		// }
-		// _, err = pocketbase.CreateUserRecord(*record, bearer)
-		// if err != nil {
-		// 	slog.Error("Error creating user record: " + err.Error())
-		// }
+		pocketbase.CreateUserRecord(user, token, admin_token)
 	}
 
+	response := map[string]interface{}{
+		// "status":  "success",
+		// "message": "Login successful",
+		"user_id": user.ID,
+		// "token":         token,
+		"access_token": token.AccessToken,
+		// "refresh_token": token.RefreshToken,
+		"expiry": util.FormatTime(token.Expiry),
+		// "verifier":      codeVerifier,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		slog.Error("Error encoding JSON response: " + err.Error())
+		http.Error(w, "Error encoding JSON response: "+err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func ValidateToken(w http.ResponseWriter, r *http.Request) {
+	// get token and user id from query parameter
+	userID := r.URL.Query().Get("user_id")
+	token := r.URL.Query().Get("token")
+
+	// check if token is valid for that user
+	bearer, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
+	if err != nil {
+		log.Fatal("Error authenticating: " + err.Error())
+	}
+	valid, err := pocketbase.ValidateToken(userID, token, bearer)
+	if err != nil {
+		slog.Error("Error validating token: " + err.Error())
+		// hard code cus lazy xd
+		http.Error(w, "{\"valid\":false}", http.StatusInternalServerError)
+		return
+	}
+	// return the result
+	response := map[string]interface{}{
+		"valid": valid,
+	}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		slog.Error("Error encoding JSON response: " + err.Error())
+		http.Error(w, "Error encoding JSON response: "+err.Error(), http.StatusInternalServerError)
+	}
 }

@@ -2,10 +2,14 @@ package pocketbase
 
 import (
 	"daylist-rewind-backend/src/http"
+	"daylist-rewind-backend/src/util"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
+
+	"github.com/zmb3/spotify/v2"
+	"golang.org/x/oauth2"
 )
 
 type AuthRequest struct {
@@ -27,17 +31,11 @@ type UserRecord struct {
 	Email           string `json:"email"`
 	Created         string `json:"created"`
 	Updated         string `json:"updated"`
-	SpotifyUsername string `json:"spotify_username"`
-	SpotifyEmail    string `json:"spotify_email"`
-	SpotifyID       string `json:"spotify_id"`
 	AccessToken     string `json:"accessToken"`
 	RefreshToken    string `json:"refreshToken"`
 	Expiry          string `json:"expiry"`
 	DisplayName     string `json:"display_name"`
 	AvatarURL       string `json:"avatar_url"`
-	ErrorCount      int    `json:"error_count"`
-	LastError       string `json:"last_error"`
-	Active          bool   `json:"active"`
 }
 
 type RecordsResponse struct {
@@ -241,6 +239,9 @@ func UpdateUser(user UserRecord, token string) (string, error) {
 }
 
 func GetUserRecord(userID string, token string) (UserRecord, error) {
+	if userID == "" {
+		return UserRecord{}, fmt.Errorf("userID is empty")
+	}
 	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
 	headers := map[string]string{
 		"Authorization": token,
@@ -248,7 +249,7 @@ func GetUserRecord(userID string, token string) (UserRecord, error) {
 
 	query := map[string]string{
 		"perPage": "1",
-		"filter":  "(spotify_id='" + userID + "')",
+		"filter":  "(username='" + userID + "')",
 	}
 	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
@@ -259,6 +260,14 @@ func GetUserRecord(userID string, token string) (UserRecord, error) {
 	err = json.Unmarshal(response, &userResponse)
 	if err != nil {
 		return UserRecord{}, fmt.Errorf("failed to unmarshal user response: %v", err)
+	}
+
+	if userResponse.TotalItems == 0 {
+		return UserRecord{}, fmt.Errorf("user not found: %v", userID)
+	}
+
+	if userResponse.TotalItems > 1 {
+		return UserRecord{}, fmt.Errorf("found more than one user with the same ID")
 	}
 
 	return userResponse.Items[0], nil
@@ -363,6 +372,7 @@ func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
 	query := map[string]string{
 		"perPage": "1000",
 		"filter":  "(owner='" + userID + "')",
+		"sort":    "-created",
 	}
 	response, err := http.GetRequest(url, query, headers)
 	if err != nil {
@@ -408,4 +418,47 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 	}
 
 	return songs, nil
+}
+
+func ValidateToken(userId string, accessToken string, adminToken string) (bool, error) {
+	user, err := GetUserRecord(userId, adminToken)
+	if err != nil || user == (UserRecord{}) {
+		slog.Error("Error getting user record: " + err.Error())
+		return false, err
+	}
+	if user.AccessToken == accessToken {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func CreateUserRecord(record *spotify.PrivateUser, token *oauth2.Token, adminToken string) {
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
+	headers := map[string]string{
+		"Authorization": adminToken,
+	}
+
+	// literally does not matter what this is it just has to be unhackable 4head
+	password := util.RandomString(25)
+
+	// Create the request body
+	data := map[string]string{
+		"username":        record.ID,
+		"email":           record.Email,
+		"emailVisibility": "false",
+		"verified":        "true",
+		"password":        password,
+		"passwordConfirm": password,
+		"accessToken":     token.AccessToken,
+		"refreshToken":    token.RefreshToken,
+		"expiry":          util.FormatTime(token.Expiry),
+		"display_name":    record.DisplayName,
+		"avatar_url":      record.Images[0].URL,
+	}
+
+	_, error := http.PostRequest(url, data, headers)
+	if error != nil {
+		slog.Error("Error creating user record: " + error.Error())
+	}
 }

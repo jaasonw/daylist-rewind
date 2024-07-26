@@ -50,6 +50,7 @@ func main() {
 	// Auth routes
 	r.Get("/login", handlers.LoginHandler)
 	r.Get("/callback", handlers.CallbackHandler)
+	r.Get("/validate", handlers.ValidateToken)
 
 	r.Route("/user/playlists", func(r chi.Router) {
 		r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
@@ -134,10 +135,16 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 	}
 
 	// generate a hash for the playlist to check if it already exists
-	// includes user id to prevent hash collisions between users
-	// includes playlist name to prevent hash collisions between playlists
-	// includes the first song to prevent hash collisions at 12am
-	playlistHash := util.GetMD5Hash(user.ID + daylist.Name + time.Now().Format("09-07-2017") + daylist.Tracks.Tracks[0].Track.ID.String())
+	playlistHash := util.GetMD5Hash(
+		// For hash collisions between users with the same playlist name
+		user.ID +
+			// Hash collisions between playlists with the same name
+			daylist.Name +
+			// Hash collisions between playlists that occur different days
+			time.Now().Format("09-07-2017") +
+			// Handles the edge case where the date changes at 12am but the playlist doesnt
+			daylist.Tracks.Tracks[0].Track.ID.String(),
+	)
 
 	slog.Info("Processing daylist for:", "user.ID", user.ID)
 	slog.Info("Playlist:", "daylist.Name", daylist.Name)
