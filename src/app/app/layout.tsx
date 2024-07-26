@@ -26,7 +26,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserDropdown } from "@/components/UserDropdown";
 import { cookies } from "next/headers";
 import PocketBase from "pocketbase";
-import { UserRecord } from "@/interfaces";
+import { PlaylistRecord, UserRecord } from "@/interfaces";
+import { SearchBar } from "@/components/SearchBar";
 
 export default async function RootLayout({
   children,
@@ -41,13 +42,16 @@ export default async function RootLayout({
 
   const cookie = cookies()?.get("pb_auth");
   const cookieData = JSON.parse(decodeURIComponent(cookie?.value ?? ""));
-  // console.log(cookieData);
   const userId = cookieData.user_id;
 
   const userData: UserRecord = await pb
     .collection("users")
     .getFirstListItem(`username="${userId}"`);
-  // console.log(userData);
+
+  const playlistsResponse = await fetch(
+    `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`
+  );
+  const playlists: PlaylistRecord[] = await playlistsResponse.json();
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -174,12 +178,13 @@ export default async function RootLayout({
             <div className="w-full flex-1">
               <form>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <SearchBar playlists={playlists} />
+                  {/* <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search playlists..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                  />
+                  /> */}
                 </div>
               </form>
             </div>
@@ -189,6 +194,10 @@ export default async function RootLayout({
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
             {children}
+            <div className="flex flex-col items-end w-full text-muted-foreground">
+              <span>created by jasonw</span>{" "}
+              <span>not affiliated with spotify</span>
+            </div>
           </main>
         </div>
       </div>

@@ -29,3 +29,18 @@ export interface PlaylistRecord {
   title: string;
   updated: string;
 }
+export interface SongRecord {
+  collectionId: string;
+  collectionName: string;
+  created: string;
+  updated: string;
+  song_id: string;
+  name: string;
+  artist: string;
+  artist_url: string;
+  album: string;
+  album_url: string;
+  album_cover: string;
+  preview_url: string;
+  duration: number;
+}

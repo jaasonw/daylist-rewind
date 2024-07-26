@@ -462,3 +462,24 @@ func CreateUserRecord(record *spotify.PrivateUser, token *oauth2.Token, adminTok
 		slog.Error("Error creating user record: " + error.Error())
 	}
 }
+
+func GetPlaylistRecord(playlistId string, adminToken string) (Playlist, error) {
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/playlists/records/" + playlistId
+	// fmt.Println(url)
+	headers := map[string]string{
+		"Authorization": adminToken,
+	}
+
+	response, err := http.GetRequest(url, nil, headers)
+	if err != nil {
+		return Playlist{}, fmt.Errorf("failed to get playlist: %v", err)
+	}
+
+	playlistResponse := Playlist{}
+	err = json.Unmarshal(response, &playlistResponse)
+	if err != nil {
+		return Playlist{}, fmt.Errorf("failed to unmarshal playlist response: %v", err)
+	}
+
+	return playlistResponse, nil
+}

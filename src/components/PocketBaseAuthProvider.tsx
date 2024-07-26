@@ -19,7 +19,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL);
 
   useEffect(() => {
-    console.log(pb.authStore);
     const checkAuth = async () => {
       if (pb.authStore.isValid) {
         setIsAuthenticated(true);

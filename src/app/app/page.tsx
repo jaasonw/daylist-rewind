@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlaylistRecord, UserRecord } from "@/interfaces";
+import { formatDate, removeDaylist } from "@/util";
 import DOMPurify from "dompurify";
 import { JSDOM } from "jsdom";
 import { cookies } from "next/headers";
@@ -38,19 +39,6 @@ function convertToSpotifyLinks(description: string) {
   return result;
 }
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  const mm = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based, so we add 1
-  const dd = String(date.getDate()).padStart(2, "0");
-  const yyyy = date.getFullYear();
-
-  return `${mm}-${dd}-${yyyy}`;
-}
-
-function removeDaylist(title: string) {
-  return title.replaceAll("daylist • ", "");
-}
-
 export default async function Dashboard() {
   const pb = new PocketBase(process.env.POCKETBASE_URL);
   await pb.admins.authWithPassword(
@@ -60,21 +48,16 @@ export default async function Dashboard() {
 
   const cookie = cookies()?.get("pb_auth");
   const cookieData = JSON.parse(decodeURIComponent(cookie?.value ?? ""));
-  // console.log(cookieData);
   const userId = cookieData.user_id;
 
   const userData: UserRecord = await pb
     .collection("users")
     .getFirstListItem(`username="${userId}"`);
-  // console.log(userData);
-  // console.log(cookieData);
-  // const userId = cookieData;
 
   const playlistsResponse = await fetch(
     `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`
   );
   const playlists: PlaylistRecord[] = await playlistsResponse.json();
-  console.log(playlists);
   return (
     <>
       <div className="flex items-center">

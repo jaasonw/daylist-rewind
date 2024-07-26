@@ -8,42 +8,6 @@ import (
 	"net/http"
 )
 
-// func InsertSong(song Song, bearer String) (string, error) {
-
-// 	url := "http://localhost:8090/api/collections/songs/records"
-
-// 	reqBody, err := json.Marshal(song)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to marshal request body: %v", err)
-// 	}
-
-// 	// Create the POST request
-// 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to make POST request: %v", err)
-// 	}
-// 	defer resp.Body.Close()
-
-// 	// Read the response
-// 	respBody, err := io.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to read response body: %v", err)
-// 	}
-
-// 	if resp.StatusCode != http.StatusOK {
-// 		return "", fmt.Errorf("received non-200 response status: %s", resp.Status)
-// 	}
-
-// 	// Unmarshal the response body into AuthResponse
-// 	var authResp AuthResponse
-// 	err = json.Unmarshal(respBody, &authResp)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
-// 	}
-
-// 	return authResp.Token, nil
-// }
-
 // PostRequest sends a POST request with a given body (any struct) and returns the response body as a byte slice.
 func PostRequest(url string, body interface{}, headers map[string]string) ([]byte, error) {
 	// Marshal the body to JSON
@@ -143,10 +107,8 @@ func PatchRequest(url string, body interface{}, headers map[string]string) ([]by
 	req.Header.Set("Content-Type", "application/json")
 
 	// Add additional headers to the request if provided
-	if headers != nil {
-		for key, value := range headers {
-			req.Header.Add(key, value)
-		}
+	for key, value := range headers {
+		req.Header.Add(key, value)
 	}
 
 	// Send the request using an http.Client

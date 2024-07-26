@@ -57,7 +57,8 @@ func main() {
 	})
 
 	r.Route("/playlist", func(r chi.Router) {
-		r.Get("/{playlistID}", handlers.GetPlaylistTracksHandler)
+		r.Get("/{playlistID}", handlers.GetSingleUserPlaylistHandler)
+		r.Get("/{playlistID}/songs", handlers.GetPlaylistTracksHandler)
 	})
 
 	// Start the server on port 8080
