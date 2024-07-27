@@ -6,13 +6,15 @@ services:
       - "3000:3000"
     restart: unless-stopped
     environment:
+      - POCKETBASE_URL=http://daylist-rewind-database:8090
       - BACKEND_URL=http://daylist-rewind-backend:8080
+    env_file:
+      - .env
+  
   daylist-rewind-database:
     image: ghcr.io/muchobien/pocketbase:latest
     container_name: daylist-rewind-database
     restart: unless-stopped
-    expose:
-      - 8090
     ports:
       - "8090:8090"
     volumes:
@@ -23,8 +25,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  
   daylist-rewind-backend:
-    image: ./backend
+    build: ./backend
     container_name: daylist-rewind-backend
     restart: unless-stopped
     expose:
@@ -33,3 +36,5 @@ services:
     #   - "8080:8080"
     environment:
       - POCKETBASE_URL=http://daylist-rewind-database:8090
+    env_file:
+      - .env

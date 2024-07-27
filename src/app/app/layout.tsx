@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import {
   Home,
