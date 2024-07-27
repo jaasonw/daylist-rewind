@@ -21,6 +21,8 @@ import (
 	"daylist-rewind-backend/src/util"
 )
 
+var adminToken string = ""
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 

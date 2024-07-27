@@ -1,6 +1,7 @@
 package pocketbase
 
 import (
+	"daylist-rewind-backend/src/global"
 	"daylist-rewind-backend/src/http"
 	"daylist-rewind-backend/src/util"
 	"encoding/json"
@@ -135,6 +136,10 @@ type PlaylistSongsResponse struct {
 }
 
 func Authenticate(identity, password string) (string, error) {
+	if global.AdminToken != "" && util.ValidateJWT() {
+		return global.AdminToken, nil
+	}
+
 	url := os.Getenv("POCKETBASE_URL") + "/api/admins/auth-with-password"
 
 	// Create the request body
@@ -157,7 +162,10 @@ func Authenticate(identity, password string) (string, error) {
 		return "", fmt.Errorf("failed to unmarshal response body: %v", err)
 	}
 
-	return authResp.Token, nil
+	slog.Info("authResp", "authResp", authResp.Token)
+	global.AdminToken = authResp.Token
+
+	return global.AdminToken, nil
 }
 
 func GetAllUsers(token string) ([]UserRecord, error) {
@@ -389,7 +397,7 @@ func GetUserPlaylists(userID string, token string) ([]Playlist, error) {
 }
 
 func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
-	url := os.Getenv("POCKETBASE_URL") + "/api/collections/song_playlist_link/records?"
+	url := os.Getenv("POCKETBASE_URL") + "/api/collections/song_playlist_link/records"
 	headers := map[string]string{
 		"Authorization": token,
 	}

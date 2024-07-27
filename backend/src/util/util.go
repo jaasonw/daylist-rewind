@@ -2,10 +2,15 @@ package util
 
 import (
 	"crypto/md5"
+	"daylist-rewind-backend/src/global"
 	"encoding/hex"
+	"fmt"
+	"log/slog"
 	"math/rand"
 	"reflect"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // ShuffleArray shuffles an array in place.
@@ -43,4 +48,50 @@ func RandomString(n int) string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func ValidateJWT() bool {
+	// global.AdminToken = ""
+
+	type TokenClaims struct {
+		Exp  int64  `json:"exp"`
+		ID   string `json:"id"`
+		Type string `json:"type"`
+	}
+
+	// claims := jwt.MapClaims{}
+	token, err := jwt.Parse(global.AdminToken, func(token *jwt.Token) (interface{}, error) {
+		// Check if the signing method is correct
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		// Return the secret key for validation
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		if err.Error() != "token signature is invalid: signature is invalid" {
+			slog.Error("Error parsing token: ",
+				"error", err.Error(),
+			)
+			return false
+		}
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		slog.Info("Token: ", "token", claims)
+
+		// Map claims to struct
+		tokenClaims := TokenClaims{
+			Exp: int64(claims["exp"].(float64)),
+			// ID:   claims["id"].(string),
+			// Type: claims["type"].(string),
+		}
+
+		exp := time.Unix(tokenClaims.Exp, 0)
+		now := time.Now()
+		return !exp.Before(now)
+	} else {
+		slog.Error("Invalid token claims")
+		return false
+	}
 }
