@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	redirectURI       = "http://localhost:3000/api/oauth-callback"
+	redirectURI       = os.Getenv("REDIRECT_URI")
 	state             = "all_i_can_do_is_all_i_can_do"
 	auth              = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadEmail, spotifyauth.ScopePlaylistModifyPrivate))
 	codeVerifierStore = sync.Map{}
