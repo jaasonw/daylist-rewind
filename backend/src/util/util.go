@@ -78,7 +78,6 @@ func ValidateJWT() bool {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		slog.Info("Token: ", "token", claims)
 
 		// Map claims to struct
 		tokenClaims := TokenClaims{

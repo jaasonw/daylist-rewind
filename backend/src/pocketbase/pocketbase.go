@@ -251,15 +251,12 @@ func GetUserRecord(userID string, token string) (UserRecord, error) {
 		return UserRecord{}, fmt.Errorf("userID is empty")
 	}
 	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
-	headers := map[string]string{
-		"Authorization": token,
-	}
-
-	query := map[string]string{
+	response, err := http.GetRequest(url, map[string]string{
 		"perPage": "1",
 		"filter":  "(username='" + userID + "')",
-	}
-	response, err := http.GetRequest(url, query, headers)
+	}, map[string]string{
+		"Authorization": token,
+	})
 	if err != nil {
 		return UserRecord{}, fmt.Errorf("failed to get user record: %v", err)
 	}
@@ -428,6 +425,7 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 	return songs, nil
 }
 
+// Checks whether an an access token provided by a user is valid
 func ValidateToken(userId string, accessToken string, adminToken string) (bool, error) {
 	user, err := GetUserRecord(userId, adminToken)
 	if err != nil || user == (UserRecord{}) {

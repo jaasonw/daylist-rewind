@@ -43,6 +43,44 @@ func GetPlaylistTracksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetUserProfileHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract userID from the URL path
+	userID := chi.URLParam(r, "userID")
+	if userID == "" {
+		http.Error(w, "Missing user ID", http.StatusForbidden)
+		return
+	}
+	accessToken := r.URL.Query().Get("access_token")
+	if accessToken == "" {
+		// 403 forbidden
+		http.Error(w, "Missing access token", http.StatusForbidden)
+		return
+	}
+
+	bearer, err := pocketbase.Authenticate(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"))
+	if err != nil {
+		log.Fatal("Error authenticating: " + err.Error())
+	}
+
+	profile, err := pocketbase.GetUserRecord(userID, bearer)
+	if err != nil {
+		slog.Error("Error getting user profile: " + err.Error())
+		http.Error(w, "Error getting user profile: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if profile.AccessToken == accessToken {
+		// 200 OK
+		if err := json.NewEncoder(w).Encode(profile); err != nil {
+			slog.Error("Error encoding JSON response: " + err.Error())
+			http.Error(w, "Error encoding JSON response: "+err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		// 403 forbidden
+		http.Error(w, "Invalid access token", http.StatusForbidden)
+		return
+	}
+}
+
 func GetUserPlaylistsHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract userID from the URL path
 	userID := chi.URLParam(r, "userID")

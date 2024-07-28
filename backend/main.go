@@ -54,8 +54,12 @@ func main() {
 	r.Get("/callback", handlers.CallbackHandler)
 	r.Get("/validate", handlers.ValidateToken)
 
-	r.Route("/user/playlists", func(r chi.Router) {
-		r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
+	r.Route("/user", func(r chi.Router) {
+		r.Get("/{userID}", handlers.GetUserProfileHandler)
+		
+		r.Route("/playlists", func(r chi.Router) {
+			r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
+		})
 	})
 
 	r.Route("/playlist", func(r chi.Router) {
