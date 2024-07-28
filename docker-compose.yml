@@ -6,7 +6,6 @@ services:
       - "3000:3000"
     restart: unless-stopped
     environment:
-      - POCKETBASE_URL=http://daylist-rewind-database:8090
       - BACKEND_URL=http://daylist-rewind-backend:8080
     env_file:
       - .env

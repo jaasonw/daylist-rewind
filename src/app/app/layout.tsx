@@ -1,19 +1,13 @@
 export const dynamic = 'force-dynamic';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import {
-  Home,
-  LineChart,
   Menu,
   Package,
   Package2,
-  Search,
-  ShoppingCart,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,11 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserDropdown } from "@/components/UserDropdown";
 import { cookies } from "next/headers";
-import PocketBase from "pocketbase";
 import { PlaylistRecord, UserRecord } from "@/interfaces";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -35,19 +27,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pb = new PocketBase(process.env.POCKETBASE_URL);
-  await pb.admins.authWithPassword(
-    process.env["ADMIN_USER"] ?? "",
-    process.env["ADMIN_PASSWORD"] ?? ""
-  );
-
   const cookie = cookies()?.get("pb_auth");
   const cookieData = JSON.parse(decodeURIComponent(cookie?.value ?? ""));
   const userId = cookieData.user_id;
 
-  const userData: UserRecord = await pb
-    .collection("users")
-    .getFirstListItem(`username="${userId}"`);
+  const userData: UserRecord = await fetch(`${process.env["BACKEND_URL"]}/user/${userId}?access_token=${cookieData.access_token}`).then(res => res.json());
 
   const playlistsResponse = await fetch(
     `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`
@@ -59,7 +43,7 @@ export default async function RootLayout({
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Link href="/" className="flex items-center gap-2 font-semibold">
+              <Link href="/app" className="flex items-center gap-2 font-semibold">
                 <Package2 className="h-6 w-6" />
                 <span className="">daylist rewind</span>
               </Link>
@@ -177,8 +161,8 @@ export default async function RootLayout({
               </SheetContent>
             </Sheet>
             <div className="w-full flex-1">
-              <form>
-                <div className="relative">
+              {/* <form> */}
+                {/* <div className="relative"> */}
                   <SearchBar playlists={playlists} />
                   {/* <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -186,8 +170,8 @@ export default async function RootLayout({
                     placeholder="Search playlists..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                   /> */}
-                </div>
-              </form>
+                {/* </div> */}
+              {/* </form> */}
             </div>
             {userData?.display_name}
             <UserDropdown avatar_url={userData?.avatar_url ?? ""} />
