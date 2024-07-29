@@ -15,8 +15,8 @@ export function SongsTable({ songs }: { songs: SongRecord[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Artist</TableHead>
+          <TableHead className="w-3/12">Title</TableHead>
+          <TableHead className="w-2/12">Artist</TableHead>
           <TableHead>Album</TableHead>
           <TableHead>Duration</TableHead>
         </TableRow>

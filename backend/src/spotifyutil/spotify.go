@@ -75,7 +75,6 @@ func ExportPlaylist(client *spotify.Client, playlistId string) (string, error) {
 	}
 
 	description := fmt.Sprintf("%s - Exported from: %s", playlistRecord.Description, os.Getenv("APP_URL"))
-	slog.Info("Creating playlist: ", "user.ID", user.ID, "playlistRecord.Title", playlistRecord.Title, "description", description)
 
 	playlist, err := client.CreatePlaylistForUser(
 		context.Background(),
