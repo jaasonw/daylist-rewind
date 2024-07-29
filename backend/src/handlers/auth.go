@@ -43,6 +43,7 @@ func generateCodeChallenge(verifier string) string {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	redirectURI = os.Getenv("REDIRECT_URI")
 	auth = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadEmail, spotifyauth.ScopePlaylistModifyPrivate))
 	codeVerifier := generateCodeVerifier()
 	codeChallenge := generateCodeChallenge(codeVerifier)

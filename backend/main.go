@@ -21,8 +21,6 @@ import (
 	"daylist-rewind-backend/src/util"
 )
 
-var adminToken string = ""
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -30,6 +28,7 @@ func main() {
 	if err != nil {
 		slog.Error("Error loading .env file")
 	}
+	slog.Info("Loaded .env file")
 
 	// Run scheduled tasks in the background
 	go JobScheduler()
@@ -56,7 +55,7 @@ func main() {
 
 	r.Route("/user", func(r chi.Router) {
 		r.Get("/{userID}", handlers.GetUserProfileHandler)
-		
+
 		r.Route("/playlists", func(r chi.Router) {
 			r.Get("/{userID}", handlers.GetUserPlaylistsHandler)
 		})
@@ -65,6 +64,7 @@ func main() {
 	r.Route("/playlist", func(r chi.Router) {
 		r.Get("/{playlistID}", handlers.GetSingleUserPlaylistHandler)
 		r.Get("/{playlistID}/songs", handlers.GetPlaylistTracksHandler)
+		r.Get("/{playlistID}/export", handlers.ExportPlaylistToSpotifyHandler)
 	})
 
 	// Start the server on port 8080
@@ -146,9 +146,7 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 		// For hash collisions between users with the same playlist name
 		user.ID +
 			// Hash collisions between playlists with the same name
-			daylist.Name +
-			// Hash collisions between playlists that occur different days
-			time.Now().Format("09-07-2017") +
+			daylist.Name + daylist.Description +
 			// Handles the edge case where the date changes at 12am but the playlist doesnt
 			daylist.Tracks.Tracks[0].Track.ID.String(),
 	)

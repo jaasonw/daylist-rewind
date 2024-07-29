@@ -1,9 +1,6 @@
 package pocketbase
 
 import (
-	"daylist-rewind-backend/src/global"
-	"daylist-rewind-backend/src/http"
-	"daylist-rewind-backend/src/util"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -11,6 +8,10 @@ import (
 
 	"github.com/zmb3/spotify/v2"
 	"golang.org/x/oauth2"
+
+	"daylist-rewind-backend/src/global"
+	"daylist-rewind-backend/src/http"
+	"daylist-rewind-backend/src/util"
 )
 
 type AuthRequest struct {
@@ -246,14 +247,14 @@ func UpdateUser(user UserRecord, token string) (string, error) {
 	return string(response), nil
 }
 
-func GetUserRecord(userID string, token string) (UserRecord, error) {
-	if userID == "" {
+func GetUserRecord(username string, token string) (UserRecord, error) {
+	if username == "" {
 		return UserRecord{}, fmt.Errorf("userID is empty")
 	}
 	url := os.Getenv("POCKETBASE_URL") + "/api/collections/users/records"
 	response, err := http.GetRequest(url, map[string]string{
 		"perPage": "1",
-		"filter":  "(username='" + userID + "')",
+		"filter":  "(username='" + username + "')",
 	}, map[string]string{
 		"Authorization": token,
 	})
@@ -268,7 +269,7 @@ func GetUserRecord(userID string, token string) (UserRecord, error) {
 	}
 
 	if userResponse.TotalItems == 0 {
-		return UserRecord{}, fmt.Errorf("user not found: %v", userID)
+		return UserRecord{}, fmt.Errorf("user not found: %v", username)
 	}
 
 	if userResponse.TotalItems > 1 {
@@ -426,8 +427,8 @@ func GetPlaylistSongs(playlistID string, token string) ([]Song, error) {
 }
 
 // Checks whether an an access token provided by a user is valid
-func ValidateToken(userId string, accessToken string, adminToken string) (bool, error) {
-	user, err := GetUserRecord(userId, adminToken)
+func ValidateToken(username string, accessToken string, adminToken string) (bool, error) {
+	user, err := GetUserRecord(username, adminToken)
 	if err != nil || user == (UserRecord{}) {
 		slog.Error("Error getting user record: " + err.Error())
 		return false, err
