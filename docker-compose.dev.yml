@@ -1,6 +1,6 @@
 services:
   daylist-rewind-frontend:
-    image: ghcr.io/jaasonw/daylist-rewind-frontend:latest
+    build: .
     container_name: daylist-rewind-frontend
     ports:
       - "3000:3000"
@@ -26,7 +26,7 @@ services:
       retries: 5
 
   daylist-rewind-backend:
-    image: ghcr.io/jaasonw/daylist-rewind-backend:latest
+    build: ./backend
     container_name: daylist-rewind-backend
     restart: unless-stopped
     expose:
