@@ -43,13 +43,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/daylist-rewind-backend:latest
             ghcr.io/${{ github.repository_owner }}/daylist-rewind-backend:${{ github.sha }}
-
-      - name: Build and push database image
-        uses: docker/build-push-action@v3
-        with:
-          context: ./pb
-          file: ./pb/Dockerfile # Ensure your Dockerfile is in the pb directory or adjust the path accordingly
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/daylist-rewind-database:latest
-            ghcr.io/${{ github.repository_owner }}/daylist-rewind-database:${{ github.sha }}
