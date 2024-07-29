@@ -4,6 +4,9 @@ web application that tracks your daylists as they rotate so they can be brought 
 
 the application can be viewed at https://daylist-rewind.physicsbirds.dev/login. (pending spotify api access approval)
 
+## demo
+https://github.com/user-attachments/assets/b592c001-9e09-4e07-ba96-1b8b6249e462
+
 ## stack
 
 - next.js
@@ -30,6 +33,9 @@ docker run -d \
   --name daylist-rewind-database-dev \
   --restart unless-stopped \
   -p 8090:8090 \
+
+
+
   -v $(pwd)/pb/pb_data:/pb_data \
   -v $(pwd)/pb/pb_public:/pb_public \
   ghcr.io/muchobien/pocketbase:latest
