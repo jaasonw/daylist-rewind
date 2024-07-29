@@ -62,7 +62,7 @@ export function SearchBar({ playlists }: { playlists: PlaylistRecord[] }) {
           <CommandGroup heading="Latest">
             {playlists.map((playlist: PlaylistRecord) => (
               <CommandItem
-                key={playlist.id}
+                key={playlist.hash}
                 value={playlist.title}
                 onSelect={() => {
                   runCommand(() => router.push(`/app/playlist/${playlist.id}`));
