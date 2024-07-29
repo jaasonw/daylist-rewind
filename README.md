@@ -2,7 +2,7 @@
 
 web application that tracks your daylists as they rotate so they can be brought back as a playlist at any point in time
 
-the application can be viewed at https://daylist-rewind.physicsbirds.dev/login.
+the application can be viewed at https://daylist-rewind.physicsbirds.dev/login. (pending spotify api access approval)
 
 ## stack
 
