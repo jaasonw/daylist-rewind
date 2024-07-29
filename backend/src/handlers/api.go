@@ -215,6 +215,8 @@ func ExportPlaylistToSpotifyHandler(w http.ResponseWriter, r *http.Request) {
 		util.LogAndProduceJsonResponse(w, http.StatusInternalServerError, response)
 		return
 	}
+
+	response["status"] = "success"
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		response["message"] = "Error encoding JSON response: (" + fmt.Sprintf("%v", response) + ")" + err.Error()
 		util.LogAndProduceJsonResponse(w, http.StatusInternalServerError, response)
