@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   // const ip = headers().get('X-Forwarded-For')
 
   const response = await fetch(
-    `${process.env["BACKEND_URL"]}/callback?code=${code}&state=${state}`
+    `${process.env["BACKEND_URL"]}/callback?code=${code}&state=${state}`,
   );
 
   const data = await response.json();

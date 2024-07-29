@@ -1,10 +1,6 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import {
-  Menu,
-  Package,
-  Package2,
-} from "lucide-react";
+import { Menu, Package, Package2 } from "lucide-react";
 import Link from "next/link";
 
 import { ModeToggle } from "@/components/ModeToggle";
@@ -31,10 +27,12 @@ export default async function RootLayout({
   const cookieData = JSON.parse(decodeURIComponent(cookie?.value ?? ""));
   const userId = cookieData.user_id;
 
-  const userData: UserRecord = await fetch(`${process.env["BACKEND_URL"]}/user/${userId}?access_token=${cookieData.access_token}`).then(res => res.json());
+  const userData: UserRecord = await fetch(
+    `${process.env["BACKEND_URL"]}/user/${userId}?access_token=${cookieData.access_token}`,
+  ).then((res) => res.json());
 
   const playlistsResponse = await fetch(
-    `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`
+    `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`,
   );
   const playlists: PlaylistRecord[] = await playlistsResponse.json();
   return (
@@ -43,7 +41,10 @@ export default async function RootLayout({
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Link href="/app" className="flex items-center gap-2 font-semibold">
+              <Link
+                href="/app"
+                className="flex items-center gap-2 font-semibold"
+              >
                 <Package2 className="h-6 w-6" />
                 <span className="">daylist rewind</span>
               </Link>
@@ -162,15 +163,15 @@ export default async function RootLayout({
             </Sheet>
             <div className="w-full flex-1">
               {/* <form> */}
-                {/* <div className="relative"> */}
-                  <SearchBar playlists={playlists} />
-                  {/* <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              {/* <div className="relative"> */}
+              <SearchBar playlists={playlists} />
+              {/* <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search playlists..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                   /> */}
-                {/* </div> */}
+              {/* </div> */}
               {/* </form> */}
             </div>
             {userData?.display_name}

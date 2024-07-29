@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { Playlists } from "@/components/PlaylistsTable";
 import { PlaylistRecord, UserRecord } from "@/interfaces";
 import { cookies } from "next/headers";
@@ -8,9 +8,11 @@ export default async function Dashboard() {
   const cookieData = JSON.parse(decodeURIComponent(cookie?.value ?? ""));
   const userId = cookieData.user_id;
 
-  const userData: UserRecord = await fetch(`${process.env["BACKEND_URL"]}/user/${userId}?access_token=${cookieData.access_token}`).then(res => res.json());
+  const userData: UserRecord = await fetch(
+    `${process.env["BACKEND_URL"]}/user/${userId}?access_token=${cookieData.access_token}`,
+  ).then((res) => res.json());
   const playlistsResponse = await fetch(
-    `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`
+    `${process.env["BACKEND_URL"]}/user/playlists/${userData.id}`,
   );
   const playlists: PlaylistRecord[] = await playlistsResponse.json();
   return (

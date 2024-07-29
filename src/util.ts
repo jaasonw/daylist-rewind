@@ -40,7 +40,7 @@ export function convertToSpotifyLinks(description: string) {
         .replace("spotify/", "")}`;
       result = result.replace(
         matches[0],
-        `<a class="underline" href="${spotifyLink}">${text}</a>`
+        `<a class="underline" href="${spotifyLink}">${text}</a>`,
       );
     }
   }
@@ -53,8 +53,6 @@ export function sanitize(html: string) {
   if (typeof window == "undefined") {
     return html;
   }
-  const DOMPurifyServer = DOMPurify(window)
-  return DOMPurifyServer.sanitize(
-    convertToSpotifyLinks(html)
-  )
+  const DOMPurifyServer = DOMPurify(window);
+  return DOMPurifyServer.sanitize(convertToSpotifyLinks(html));
 }

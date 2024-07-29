@@ -4,7 +4,7 @@ export async function middleware(request: NextRequest) {
   // Reverse proxy for backend
   if (request.nextUrl.pathname.startsWith("/oauth")) {
     return NextResponse.rewrite(
-      new URL(`${process.env["BACKEND_URL"]}/login`, request.url)
+      new URL(`${process.env["BACKEND_URL"]}/login`, request.url),
     );
   }
 
@@ -21,10 +21,10 @@ export async function middleware(request: NextRequest) {
   if (request.cookies.get("pb_auth")?.value) {
     try {
       const parsed = JSON.parse(
-        decodeURIComponent(request.cookies.get("pb_auth")?.value ?? "")
+        decodeURIComponent(request.cookies.get("pb_auth")?.value ?? ""),
       );
       const validationResponse = await fetch(
-        `${process.env["BACKEND_URL"]}/validate?user_id=${parsed?.user_id}&token=${parsed?.access_token}`
+        `${process.env["BACKEND_URL"]}/validate?user_id=${parsed?.user_id}&token=${parsed?.access_token}`,
       );
       valid = (await validationResponse.json())["valid"];
     } catch (e) {

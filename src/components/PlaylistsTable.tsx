@@ -1,7 +1,12 @@
 "use client";
 
 import { PlaylistRecord } from "@/interfaces";
-import { convertToSpotifyLinks, formatDate, removeDaylist, sanitize } from "@/util";
+import {
+  convertToSpotifyLinks,
+  formatDate,
+  removeDaylist,
+  sanitize,
+} from "@/util";
 import {
   Table,
   TableBody,
@@ -12,9 +17,6 @@ import {
 } from "@/components/ui/table";
 import DOMPurify from "dompurify";
 import { useRouter } from "next/navigation";
-
-
-
 
 export function Playlists({ playlists }: { playlists: PlaylistRecord[] }) {
   const router = useRouter();
@@ -39,9 +41,7 @@ export function Playlists({ playlists }: { playlists: PlaylistRecord[] }) {
             <TableCell>{removeDaylist(playlist.title)}</TableCell>
             <TableCell
               dangerouslySetInnerHTML={{
-                __html: sanitize(
-                  convertToSpotifyLinks(playlist.description)
-                ),
+                __html: sanitize(convertToSpotifyLinks(playlist.description)),
               }}
             ></TableCell>
           </TableRow>

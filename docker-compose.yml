@@ -9,7 +9,7 @@ services:
       - BACKEND_URL=http://daylist-rewind-backend:8080
     env_file:
       - .env
-  
+
   daylist-rewind-database:
     image: ghcr.io/muchobien/pocketbase:latest
     container_name: daylist-rewind-database
@@ -24,7 +24,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  
+
   daylist-rewind-backend:
     build: ./backend
     container_name: daylist-rewind-backend
