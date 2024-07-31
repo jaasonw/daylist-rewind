@@ -152,9 +152,9 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 	)
 
 	slog.Info("Processing daylist for:", "user.ID", user.ID)
-	slog.Info("Playlist:", "daylist.Name", daylist.Name)
-	slog.Info("Playlist:", "daylist.Image", daylist.Images[0].URL)
-	slog.Info("Playlist:", "daylist.hash", playlistHash)
+	// slog.Info("Playlist:", "daylist.Name", daylist.Name)
+	// slog.Info("Playlist:", "daylist.Image", daylist.Images[0].URL)
+	// slog.Info("Playlist:", "daylist.hash", playlistHash)
 	playlistExists, _, _ := pocketbase.CheckPlaylistExists(playlistHash, pocketbase_token)
 	if playlistExists {
 		slog.Info("Daylist unchanged, skipping")
@@ -188,7 +188,7 @@ func UpdateUser(client *spotify.Client, userRecord pocketbase.UserRecord, pocket
 		insertResponse, err := pocketbase.InsertSong(song, pocketbase_token)
 		if err != nil {
 			if insertResponse != "Value must be unique." {
-				log.Printf("Error inserting song" + song.SongID + err.Error())
+				slog.Error("Error inserting song" + song.SongID + err.Error())
 			} else {
 				song, err := pocketbase.GetSongBySongId(song.SongID, pocketbase_token)
 				if err != nil {
